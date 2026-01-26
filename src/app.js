@@ -13,4 +13,7 @@ app.use( express.urlencoded({ extended: true, limit: "50kb" }) );
 app.use( express.static("public") );
 app.use( cookie());
 
+import UserRouter from "./Routes/User.route.js";
+app.use("/api/v1/user", UserRouter);
+
 export default app;
