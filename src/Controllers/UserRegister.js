@@ -1,7 +1,7 @@
 import AsyncHandler from '../Utils/AsyncHandler.js';
-import User from '../Models/userModel.js';
-import Showerror from '../Utils/Showerror.js';
-import Uploadoncloudinary  from '../Utils/CloudinaryUpload.js';
+import {User} from '../Models/User.model.js';
+import Showerror from '../Utils/ShowError.js';
+import Uploadoncloudinary  from '../Utils/cloudinary.js';
 import apiresponse from '../Utils/ApiResponse.js';
 
 const Registeruser   = AsyncHandler( async(req, res) => {
@@ -14,7 +14,7 @@ const Registeruser   = AsyncHandler( async(req, res) => {
     }
 
     // check if user already exists
-    const existingUser = await user.findOne({  $or : [ { email }, { username } ] });
+    const existingUser = await User.findOne({  $or : [ { email }, { username } ] });
     if  ( existingUser ) {
         throw new Showerror( 400, "User already exists with this email or username" );
     }
