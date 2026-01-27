@@ -47,7 +47,7 @@ const Registeruser   = AsyncHandler( async(req, res) => {
         throw new Showerror( 500, "Error creating user" );
     }
 
-    const removeuserfields  = await newuser.findById(newuser._id).select("-password -refressToken");
+    const removeuserfields  = await newuser.findById(newuser._id).select("-password -refreshToken");
     if ( !removeuserfields ) {
         throw new Showerror( 500, "Error retrieving user data" );
     }

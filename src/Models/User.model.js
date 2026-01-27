@@ -41,7 +41,7 @@ const UserSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "Video"
         },
-        referessToken: {
+        refreshToken: {
             type: String
         }
 
