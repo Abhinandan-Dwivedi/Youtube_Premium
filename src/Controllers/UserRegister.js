@@ -2,8 +2,26 @@ import AsyncHandler from '../Utils/AsyncHandler.js';
 import {User} from '../Models/User.model.js';
 import Showerror from '../Utils/ShowError.js';
 import Uploadoncloudinary  from '../Utils/cloudinary.js';
-import apiresponse from '../Utils/ApiResponse.js';
+import ApiResponse from '../Utils/ApiResponse.js';
 
+const generateaccess_refressToken  = async  (userid) =>{
+    try {
+        const user =  await User.findById( userid );
+        if ( !user ) {
+            throw new Showerror( 500, "Error generating token" );
+        }
+    
+        const accessToken = user.generatetoken();
+        const refreshToken = user.Refreshtoken();
+    
+        user.refreshToken = refreshToken
+            await user.save({ validateBeforeSave: false })
+    
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new Showerror( 500, "Error generating tokens" );
+    }
+}
 const Registeruser   = AsyncHandler( async(req, res) => {
 
     // const username = req.body.username;
@@ -58,4 +76,41 @@ const Registeruser   = AsyncHandler( async(req, res) => {
     return res.status(201).json(new apiresponse( 201, "User registered successfully", removeuserfields ));
 })
 
-export default Registeruser;
+const Login  = AsyncHandler( async ( req, res ) => {
+    const { username, email, password } = req.body;
+    if ( [username, email, password].some( (field)=>{
+        return field.trim() === ""; }) ) 
+    {
+        throw new Showerror( 400, "All fields are required" );
+    }
+
+    const validateuser  = await User.findOne({ $or: [ { email }, { username: username.toLowerCase() } ] });
+    if ( !validateuser ) {
+        throw new Showerror( 400, "Invalid credentials" );
+    }
+
+    const passwordmatch = await validateuser.comparepassword( password );
+    if ( !passwordmatch ) {
+        throw new Showerror( 400, "Invalid Password" );
+    }
+
+    const {accessToken , refreshToken} = await generateaccess_refressToken(validateuser._id);
+    
+    const logedinuser = await User.findById( validateuser._id ).select("-password -refreshToken");
+
+     const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res.status( 200 )
+    .cookie( "accessToken", accessToken , options)
+    .cookie( "refreshToken", refreshToken, options)
+    .json( new ApiResponse( 200, "User logged in successfully", logedinuser ));
+
+})
+
+export { 
+    Registeruser,
+    Login
+ };
