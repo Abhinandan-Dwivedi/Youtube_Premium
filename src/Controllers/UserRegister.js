@@ -6,6 +6,9 @@ import apiresponse from '../Utils/ApiResponse.js';
 
 const Registeruser   = AsyncHandler( async(req, res) => {
 
+    // const username = req.body.username;
+    // return res.status(200).json(  username );
+    
     const { username, fullname, email, password } = req.body;
     if ( [username, fullname, email, password].some( (field)=>{
         return field.trim() === ""; }) ) 
@@ -47,7 +50,7 @@ const Registeruser   = AsyncHandler( async(req, res) => {
         throw new Showerror( 500, "Error creating user" );
     }
 
-    const removeuserfields  = await newuser.findById(newuser._id).select("-password -refreshToken");
+    const removeuserfields  = await User.findById(newuser._id).select("-password -refreshToken");
     if ( !removeuserfields ) {
         throw new Showerror( 500, "Error retrieving user data" );
     }
