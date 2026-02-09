@@ -1,9 +1,11 @@
 import AsyncHandler from '../Utils/AsyncHandler.js';
 import { User } from '../Models/User.model.js';
 import Showerror from '../Utils/ShowError.js';
-import Uploadoncloudinary from '../Utils/cloudinary.js';
+import { Uploadoncloudinary, deletingfilefromcloudinary } from '../Utils/cloudinary.js';
 import ApiResponse from '../Utils/ApiResponse.js';
-import asyncHandler from '../Utils/AsyncHandler.js';
+// import asyncHandler from '../Utils/AsyncHandler.js';
+import jwt from 'jsonwebtoken';
+
 
 const generateaccess_refressToken = async (userid) => {
     try {
@@ -193,10 +195,80 @@ const changecurrentpassword = AsyncHandler( async (req, res) => {
 
 });
 
+const getcurrentuser = AsyncHandler( async (req, res) => {
+    const user = await User.findById(req.user?._id).select("-password -refreshToken");
+    if (!user) {
+        throw new Showerror(404, "getCurrentUser: User not found");
+    }
+    return res.status(200).json(new ApiResponse(200, "Current user retrieved successfully", user));
+}) 
+
+const updateuserdetails = AsyncHandler( async (req, res) => {
+    const { fullname, username } = req.body;
+    if ( [fullname, username].some((field) => {
+        return field.trim() === "";
+    }) ) {
+        throw new Showerror(400, "updateuserdetails: All fields are required");
+    }
+
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new Showerror(404, "updateUserDetails: User not found");
+    }
+
+    user.fullname = fullname;
+    user.username = username.toLowerCase();
+    await user.save( {validateBeforeSave: false} );
+
+    const updateduser = await User.findById(req.user?._id).select("-password -refreshToken");
+
+    return res.status(200).json(new ApiResponse(200, "User details updated successfully", updateduser));
+})
+
+const updateAvatarimg = AsyncHandler( async (req, res) => {
+
+    const { newavatar } = req.file;
+    if ( !newavatar ) {
+        throw new Showerror(400, "updateAvatarimg: New avatar image is required");
+    }
+
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new Showerror(404, "updateAvatarimg: User not found");
+    }
+
+    // deteting the old avatar image from cloudinary
+    if ( user.avatar ) {
+        const publicId = user.avatar.split("/").pop().split(".")[0];
+        deletingfilefromcloudinary(publicId);
+    }
+
+    // udating the avatar 
+    const avatar = await Uploadoncloudinary(newavatar.path);
+    if (!avatar) {
+        throw new Showerror(500, "updateAvatarimg: Error uploading new avatar image");
+    }
+    const updatedavatar = User.findByIdAndUpdate(
+        req.user._id,
+        {
+             $set: { 
+                avatar: avatar.url
+                 }
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res.status(200).json(new ApiResponse(200, "Avatar image updated successfully", updatedavatar));
+    
+})
+
+
 export {
     Registeruser,
     Login,
     Logout,
     refreshaccesstoken,
-    changecurrentpassword
+    changecurrentpassword,
+    getcurrentuser,
+    updateuserdetails
 };
