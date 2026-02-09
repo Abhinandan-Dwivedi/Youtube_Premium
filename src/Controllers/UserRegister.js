@@ -262,6 +262,41 @@ const updateAvatarimg = AsyncHandler( async (req, res) => {
     
 })
 
+const updateCoverimg = AsyncHandler( async (req, res) => {
+
+    const { newcoverImage } = req.file;
+    if ( !newcoverImage ) {
+        throw new Showerror(400, "updateCoverimg: New cover image is required");
+    }
+    
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new Showerror(404, "updatecoverimg: User not found");
+    }
+
+    // deteting the old cover image from cloudinary
+    if ( user.coverImage ) {
+        const publicId = user.coverImage.split("/").pop().split(".")[0];
+        deletingfilefromcloudinary(publicId);
+    }
+
+    // udating the cover image 
+    const coverimg = await Uploadoncloudinary(newcoverImage.path);
+    if (!coverimg) {
+        throw new Showerror(500, "updateCoverimg: Error uploading new cover image");
+    }
+    const updatedconerimg = User.findByIdAndUpdate(
+        req.user._id,
+        {
+             $set: { 
+                coverImage:  coverimg.url
+                 }
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+
+    return res.status(200).json(new ApiResponse(200, "Cover image updated successfully", updatedconerimg));
+})
 
 export {
     Registeruser,
@@ -270,5 +305,7 @@ export {
     refreshaccesstoken,
     changecurrentpassword,
     getcurrentuser,
-    updateuserdetails
+    updateuserdetails,
+    updateAvatarimg,
+    updateCoverimg
 };
