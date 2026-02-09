@@ -168,9 +168,35 @@ const refreshaccesstoken = AsyncHandler( async (req, res)=> {
     }
 })
 
+const changecurrentpassword = AsyncHandler( async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if ( [currentPassword, newPassword].some((field) => {
+        return field.trim() === "";
+    }) ) {
+        throw new Showerror(400, "All fields are required");
+    }
+
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new Showerror(404, "changeCurrentPassword: User not found");
+    }
+
+    const isMatch = await user.ComparePassword(currentPassword);
+    if (!isMatch) {
+        throw new Showerror(400, "Current password is incorrect");
+    }
+
+    user.password = newPassword;
+    await user.save( {validateBeforeSave: false} );
+
+    return res.status(200).json(new ApiResponse(200, "Password changed successfully", null));
+
+});
+
 export {
     Registeruser,
     Login,
     Logout,
-    refreshaccesstoken
+    refreshaccesstoken,
+    changecurrentpassword
 };
