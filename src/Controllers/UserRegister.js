@@ -3,8 +3,8 @@ import { User } from '../Models/User.model.js';
 import Showerror from '../Utils/ShowError.js';
 import { Uploadoncloudinary, deletingfilefromcloudinary } from '../Utils/cloudinary.js';
 import ApiResponse from '../Utils/ApiResponse.js';
-// import asyncHandler from '../Utils/AsyncHandler.js';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 
 const generateaccess_refressToken = async (userid) => {
@@ -134,26 +134,26 @@ const Logout = AsyncHandler(async (req, res) => {
 
 })
 
-const refreshaccesstoken = AsyncHandler( async (req, res)=> {
-    
-    const oldrefreshToken = req.cookies?.refreshToken || req.body.refreshToken; 
+const refreshaccesstoken = AsyncHandler(async (req, res) => {
+
+    const oldrefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
     if (!oldrefreshToken) {
         throw new Showerror(401, "Refresh token not found");
     }
 
     try {
         const decodedtoken = jwt.verify(oldrefreshToken, process.env.REFRESH_TOKEN_SECRET);
-        if ( !decodedtoken || !decodedtoken._id ) {
+        if (!decodedtoken || !decodedtoken._id) {
             throw new Showerror(401, "Invalid refresh token");
         }
-        
+
         const user = User.findById(decodedtoken._id);
-        if ( !user || user.refreshToken !== oldrefreshToken ) {
+        if (!user || user.refreshToken !== oldrefreshToken) {
             throw new Showerror(401, "Invalid refresh token, user not found or token mismatch");
         }
-    
+
         const { accessToken, newrefreshToken } = await generateaccess_refressToken(user._id);
-    
+
         const options = {
             httpOnly: true,
             secure: true
@@ -162,19 +162,19 @@ const refreshaccesstoken = AsyncHandler( async (req, res)=> {
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", newrefreshToken, options)
             .json(
-                new ApiResponse(200, "Access token refreshed successfully", { accessToken, refreshToken : newrefreshToken })
+                new ApiResponse(200, "Access token refreshed successfully", { accessToken, refreshToken: newrefreshToken })
             );
-    
+
     } catch (error) {
         throw new Showerror(401, "catch error: Invalid refresh token ");
     }
 })
 
-const changecurrentpassword = AsyncHandler( async (req, res) => {
+const changecurrentpassword = AsyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;
-    if ( [currentPassword, newPassword].some((field) => {
+    if ([currentPassword, newPassword].some((field) => {
         return field.trim() === "";
-    }) ) {
+    })) {
         throw new Showerror(400, "All fields are required");
     }
 
@@ -189,25 +189,25 @@ const changecurrentpassword = AsyncHandler( async (req, res) => {
     }
 
     user.password = newPassword;
-    await user.save( {validateBeforeSave: false} );
+    await user.save({ validateBeforeSave: false });
 
     return res.status(200).json(new ApiResponse(200, "Password changed successfully", null));
 
 });
 
-const getcurrentuser = AsyncHandler( async (req, res) => {
+const getcurrentuser = AsyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id).select("-password -refreshToken");
     if (!user) {
         throw new Showerror(404, "getCurrentUser: User not found");
     }
     return res.status(200).json(new ApiResponse(200, "Current user retrieved successfully", user));
-}) 
+})
 
-const updateuserdetails = AsyncHandler( async (req, res) => {
+const updateuserdetails = AsyncHandler(async (req, res) => {
     const { fullname, username } = req.body;
-    if ( [fullname, username].some((field) => {
+    if ([fullname, username].some((field) => {
         return field.trim() === "";
-    }) ) {
+    })) {
         throw new Showerror(400, "updateuserdetails: All fields are required");
     }
 
@@ -218,17 +218,17 @@ const updateuserdetails = AsyncHandler( async (req, res) => {
 
     user.fullname = fullname;
     user.username = username.toLowerCase();
-    await user.save( {validateBeforeSave: false} );
+    await user.save({ validateBeforeSave: false });
 
     const updateduser = await User.findById(req.user?._id).select("-password -refreshToken");
 
     return res.status(200).json(new ApiResponse(200, "User details updated successfully", updateduser));
 })
 
-const updateAvatarimg = AsyncHandler( async (req, res) => {
+const updateAvatarimg = AsyncHandler(async (req, res) => {
 
     const { newavatar } = req.file;
-    if ( !newavatar ) {
+    if (!newavatar) {
         throw new Showerror(400, "updateAvatarimg: New avatar image is required");
     }
 
@@ -238,7 +238,7 @@ const updateAvatarimg = AsyncHandler( async (req, res) => {
     }
 
     // deteting the old avatar image from cloudinary
-    if ( user.avatar ) {
+    if (user.avatar) {
         const publicId = user.avatar.split("/").pop().split(".")[0];
         deletingfilefromcloudinary(publicId);
     }
@@ -251,31 +251,31 @@ const updateAvatarimg = AsyncHandler( async (req, res) => {
     const updatedavatar = User.findByIdAndUpdate(
         req.user._id,
         {
-             $set: { 
+            $set: {
                 avatar: avatar.url
-                 }
+            }
         },
         { new: true }
     ).select("-password -refreshToken");
 
     return res.status(200).json(new ApiResponse(200, "Avatar image updated successfully", updatedavatar));
-    
+
 })
 
-const updateCoverimg = AsyncHandler( async (req, res) => {
+const updateCoverimg = AsyncHandler(async (req, res) => {
 
     const { newcoverImage } = req.file;
-    if ( !newcoverImage ) {
+    if (!newcoverImage) {
         throw new Showerror(400, "updateCoverimg: New cover image is required");
     }
-    
+
     const user = await User.findById(req.user?._id);
     if (!user) {
         throw new Showerror(404, "updatecoverimg: User not found");
     }
 
     // deteting the old cover image from cloudinary
-    if ( user.coverImage ) {
+    if (user.coverImage) {
         const publicId = user.coverImage.split("/").pop().split(".")[0];
         deletingfilefromcloudinary(publicId);
     }
@@ -288,14 +288,140 @@ const updateCoverimg = AsyncHandler( async (req, res) => {
     const updatedconerimg = User.findByIdAndUpdate(
         req.user._id,
         {
-             $set: { 
-                coverImage:  coverimg.url
-                 }
+            $set: {
+                coverImage: coverimg.url
+            }
         },
         { new: true }
     ).select("-password -refreshToken");
 
     return res.status(200).json(new ApiResponse(200, "Cover image updated successfully", updatedconerimg));
+})
+
+const getUserChannelProfile = AsyncHandler(async (req, res) => {
+    const { username } = req.params
+
+    if (!username?.trim()) {
+        throw new Showerror(400, "username is missing")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channels",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
+            }
+        }
+    ])
+
+    if (!channel?.length) {
+        throw new Showerror(404, "channel does not exists")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, "User channel fetched successfully", channel[0])
+        )
+})
+
+const getWatchHistory = AsyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].watchHistory,
+                "Watch history fetched successfully"
+            )
+        )
 })
 
 export {
@@ -307,5 +433,7 @@ export {
     getcurrentuser,
     updateuserdetails,
     updateAvatarimg,
-    updateCoverimg
+    updateCoverimg,
+    getUserChannelProfile,
+    getWatchHistory
 };
