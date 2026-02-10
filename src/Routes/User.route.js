@@ -33,18 +33,18 @@ router.route("/login").post(Login);
 
 router.route("/logout").post(Authstatus, Logout);
 
-router.route("/password-change").post(Authstatus, changecurrentpassword);
+router.route("/password").patch(Authstatus, changecurrentpassword); 
 
-router.route("/current-user").get(Authstatus, getcurrentuser);
+router.route("/user").get(Authstatus, getcurrentuser);
 
-router.route("/update-Account").patch(Authstatus, updateuserdetails);
+router.route("/Account").patch(Authstatus, updateuserdetails);
 
-router.route("/update-avatar").patch(Authstatus, Upload.single("avatar"), updateAvatarimg);
+router.route("/avatar").patch(Authstatus, Upload.single("avatar"), updateAvatarimg);
 
-router.route("/update-cover").patch(Authstatus, Upload.single("coverImage"), updateCoverimg);
+router.route("/coverimage").patch(Authstatus, Upload.single("coverImage"), updateCoverimg); 
 
-router.route("/c/:username").get(getUserChannelProfile);
+router.route("/c/:username").get(Authstatus , getUserChannelProfile);
 
-router.route("/watch-history").get(Authstatus, getWatchHistory);
+router.route("/history").get(Authstatus, getWatchHistory);
 
 export default router;
