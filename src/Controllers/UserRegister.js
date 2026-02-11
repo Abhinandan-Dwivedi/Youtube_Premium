@@ -15,14 +15,16 @@ const generateaccess_refressToken = async (userid) => {
         }
 
         const accessToken = user.generatetoken();
-        const refreshToken = user.Refreshtoken();
+        const refreshToken = user.Refresstoken();
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
 
         return { accessToken, refreshToken };
+        
     } catch (error) {
-        throw new Showerror(500, "Error generating tokens");
+        console.error('generateaccess_refressToken error:', error);
+        throw new Showerror(500, `Error generating tokens: ${error.message}`);
     }
 }
 const Registeruser = AsyncHandler(async (req, res) => {
@@ -76,7 +78,7 @@ const Registeruser = AsyncHandler(async (req, res) => {
         throw new Showerror(500, "Error retrieving user data");
     }
 
-    return res.status(201).json(new apiresponse(201, "User registered successfully", removeuserfields));
+    return res.status(201).json(new ApiResponse(201, "User registered successfully", removeuserfields));
 })
 
 const Login = AsyncHandler(async (req, res) => {
@@ -92,7 +94,7 @@ const Login = AsyncHandler(async (req, res) => {
         throw new Showerror(400, "Invalid credentials");
     }
 
-    const passwordmatch = await validateuser.comparepassword(password);
+    const passwordmatch = await validateuser.ComparePassword(password);
     if (!passwordmatch) {
         throw new Showerror(400, "Invalid Password");
     }
@@ -109,7 +111,7 @@ const Login = AsyncHandler(async (req, res) => {
     return res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .json(new ApiResponse(200, "User logged in successfully", logedinuser));
+        .json(new ApiResponse(200, "User logged in successfully", { accessToken, refreshToken, user: logedinuser }));
 
 })
 
@@ -142,17 +144,17 @@ const refreshaccesstoken = AsyncHandler(async (req, res) => {
     }
 
     try {
-        const decodedtoken = jwt.verify(oldrefreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const decodedtoken = jwt.verify(oldrefreshToken, process.env.REFRESH_JWT_SECRET);
         if (!decodedtoken || !decodedtoken._id) {
             throw new Showerror(401, "Invalid refresh token");
         }
 
-        const user = User.findById(decodedtoken._id);
+        const user = await User.findById(decodedtoken._id);
         if (!user || user.refreshToken !== oldrefreshToken) {
             throw new Showerror(401, "Invalid refresh token, user not found or token mismatch");
         }
 
-        const { accessToken, newrefreshToken } = await generateaccess_refressToken(user._id);
+        const { accessToken, refreshToken } = await generateaccess_refressToken(user._id);
 
         const options = {
             httpOnly: true,
@@ -160,9 +162,9 @@ const refreshaccesstoken = AsyncHandler(async (req, res) => {
         }
         return res.status(200)
             .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", newrefreshToken, options)
+            .cookie("refreshToken", refreshToken, options)
             .json(
-                new ApiResponse(200, "Access token refreshed successfully", { accessToken, refreshToken: newrefreshToken })
+                new ApiResponse(200, "Access token refreshed successfully", { accessToken, refreshToken })
             );
 
     } catch (error) {
