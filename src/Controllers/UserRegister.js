@@ -242,7 +242,7 @@ const updateAvatarimg = AsyncHandler(async (req, res) => {
     // deteting the old avatar image from cloudinary
     if (user.avatar) {
         const publicId = user.avatar.split("/").pop().split(".")[0];
-        deletingfilefromcloudinary(publicId);
+        await deletingfilefromcloudinary(publicId);
     }
 
     // udating the avatar 
