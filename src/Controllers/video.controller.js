@@ -38,7 +38,7 @@ const uploadvideo = AsyncHandler(async (req, res) => {
 })
 
 const deletevideo = AsyncHandler(async (req, res) => {
-    const videoId = req.params.id;
+    const videoId = req.params.videoId;
     if (!videoId) {
         throw new Showerror(400, "Video id is required");
     }
@@ -134,7 +134,8 @@ const getVideoById = AsyncHandler(async (req, res) => {
     if (!video) {
         throw new Showerror(404, "Video not found");
     }
-    if (!video.isPublished && video.owner._id.toString() !== req.user._id.toString()) {
+
+    if (!video.isPublished && (!req.user || video.owner._id.toString() !== req.user._id.toString())) {
         throw new Showerror(403, "You are not authorized to view this video");
     }
 
@@ -193,7 +194,7 @@ const updateVideo = AsyncHandler(async (req, res) => {
 })
 
 const togglePublishStatus = AsyncHandler(async (req, res) => {
-    const { videoId } = req.params
+    const { videoId } = req.params.videoId;
     if (!videoId) {
         throw new Showerror(400, " togglePublishStatus: Video id is required");
     }
