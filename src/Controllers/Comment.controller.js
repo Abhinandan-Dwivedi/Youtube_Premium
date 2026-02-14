@@ -33,7 +33,7 @@ const createComment = AsyncHandler(async (req, res) => {
 })
 
 const deletecomment = AsyncHandler(async (req, res) => {
-    const commentId = req.params.id;
+    const commentId = req.params;
     if (!commentId) {
         throw new Showerror(400, "deletecomment : Comment id is required");
     }
@@ -53,7 +53,7 @@ const deletecomment = AsyncHandler(async (req, res) => {
 })
 
 const updateComment = AsyncHandler(async (req, res) => {
-    const commentId = req.params.id;
+    const commentId = req.params;
     const { content } = req.body;
     if (!commentId) {
         throw new Showerror(400, "updateComment : Comment id is required");
