@@ -192,11 +192,33 @@ const updateVideo = AsyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Video updated successfully", updatedvideo));
 })
 
+const togglePublishStatus = AsyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    if (!videoId) {
+        throw new Showerror(400, " togglePublishStatus: Video id is required");
+    }
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new Showerror(400, " togglePublishStatus: Invalid video id");
+    }
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new Showerror(404, " togglePublishStatus: Video not found");
+    }
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new Showerror(403, " togglePublishStatus: You are not authorized to update this video");
+    }
+
+    video.isPublished = !video.isPublished;
+    await video.save( {validationBeforeSave: false });
+    return res.status(200).json(new ApiResponse(200, `Video ${video.isPublished ? "published" : "unpublished"} successfully`, video));
+})
+
 export {
     uploadvideo,
     deletevideo,
     getAllVideos,
     getVideoById,
-    updateVideo
+    updateVideo,
+    togglePublishStatus
 };
 
