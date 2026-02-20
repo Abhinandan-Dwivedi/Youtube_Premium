@@ -2,7 +2,7 @@ import AsyncHandler from '../Utils/AsyncHandler.js';
 import { tweets  } from '../Models/tweets.model.js';
 import Showerror from '../Utils/ShowError.js';
 import ApiResponse from '../Utils/ApiResponse.js';
-import mongoose, { isValid , isValidObjectId} from 'mongoose'; 
+import mongoose from 'mongoose'; 
 
 const Createtweet = AsyncHandler(async (req, res) => {
     const { content } = req.body;

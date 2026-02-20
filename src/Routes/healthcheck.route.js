@@ -1,6 +1,5 @@
 import { Router } from "express";
-import Authstatus from "../Middlewares/Authstatus.middleware";
-import { healthcheck } from "../Controllers/healthckeck.controller";
+import { healthcheck } from "../Controllers/healthckeck.controller.js";
 
 const router = Router();
 router.route("/").get(healthcheck);

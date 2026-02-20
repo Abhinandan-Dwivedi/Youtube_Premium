@@ -1,10 +1,10 @@
 import { Router } from "express";
-import Authstatus from "../Middlewares/Authstatus.middleware";
+import Authstatus from "../Middlewares/Authstatus.middleware.js";
 import {
     togglesubscription,
     getsubscribers,
     getsubscribedchannels,
-} from "../Controllers/Subscriber.controller.js";
+} from "../Controllers/Subscription.controller.js";
 
 const router = Router();
 router.use(Authstatus);

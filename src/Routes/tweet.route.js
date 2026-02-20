@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import Authstatus from '../Middlewares/Authstatus.middleware';
+import Authstatus from '../Middlewares/Authstatus.middleware.js';
 import {
     Createtweet,
     updatetweet,

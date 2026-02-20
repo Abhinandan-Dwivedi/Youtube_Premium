@@ -1,11 +1,11 @@
 import { Router } from "express";
-import Authstatus from "../Middlewares/Authstatus.middleware";
+import Authstatus from "../Middlewares/Authstatus.middleware.js";
 import {
     createComment,
     deletecomment,
     updateComment,
     getVideoComments
-} from "../Controllers/Comment.controller";
+} from "../Controllers/Comment.controller.js";
 
 const router = Router();
 router.use(Authstatus);
